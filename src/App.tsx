@@ -69,11 +69,53 @@ const SERVICES: Service[] = [
 ];
 
 const TROUBLES = [
-  { t: "Усталость после работы", r: "Живой Пар + Синусоида", icon: <Clock /> },
-  { t: "Напряжение в спине и шее", r: "Синусоида или Массаж", icon: <Target /> },
-  { t: "Хочется расслабиться", r: "Живой Пар", icon: <Wind /> },
-  { t: "Не знаю, что выбрать", r: "Спросить ассистента", icon: <MessageCircle /> },
+  { t: "Усталость после работы", r: "Живой Пар + Синусоида", icon: <Clock />, target: "#complex" },
+  { t: "Напряжение в спине и шее", r: "Синусоида или Массаж", icon: <Target />, target: "#services" },
+  { t: "Хочется расслабиться", r: "Живой Пар", icon: <Wind />, target: "#services" },
+  { t: "Не знаю, что выбрать", r: "Спросить ассистента", icon: <MessageCircle />, target: "ai" },
 ];
+
+const RESULTS = [
+  { t: "Ощущение легкости", d: "Самый частый отзыв. Клиенты говорят, что после визита тело становится «невесомым»." },
+  { t: "Глубокое спокойствие", d: "Мягкий пар и ритм синусоиды замедляют поток мыслей и снимают стресс." },
+  { t: "Свобода движений", d: "Уходит чувство скованности в плечах и спине, возвращается естественная подвижность." },
+  { t: "Ресурсное состояние", d: "Чувство бодрости и ясности, как после полноценного выходного дня." }
+];
+
+const STEPS = [
+  { n: '01', t: 'Знакомство', d: 'Встречаем, уточняем ваш запрос и самочувствие перед началом.' },
+  { n: '02', t: 'Подготовка', d: 'Расскажем, как проходят процедуры, что можно и нельзя.' },
+  { n: '03', t: 'Живой Пар', d: 'Мягкое паровое воздействие при температуре до 42°C.' },
+  { n: '04', t: 'Синусоида', d: 'Плавное волнообразное движение для расслабления тела.' },
+  { n: '05', t: 'Отдых', d: 'Несколько минут тишины и спокойствия после процедуры.' },
+  { n: '06', t: 'Рекомендация', d: 'Подскажем, какой формат подойдет дальше: разово или курс.' },
+];
+
+const AUDIENCES = [
+  { t: "Офисные сотрудники", d: "Для тех, кто много сидит, устает от компьютера и чувствует напряжение в спине." },
+  { t: "Предприниматели", d: "Для тех, кто принимает много решений и хочет восстановить спокойствие." },
+  { t: "Спортсмены", d: "Для мягкого восстановления мышц и ощущения легкости после нагрузок." },
+  { t: "Пожилые люди", d: "Для бережной заботы о теле, расслабления и поддержания подвижности." },
+  { t: "Любители массажа", d: "Для тех, кто хочет усилить эффект ручной работы мягким паром." },
+  { t: "Ищущие тишины", d: "Кому нужно 45–90 минут абсолютного спокойствия и перезагрузки." }
+];
+
+const PRICES = {
+  single: [
+    { name: "Живой Пар", price: "1 200 ₽", time: "30-40 мин" },
+    { name: "Синусоида", price: "700 ₽", time: "15-20 мин" },
+    { name: "Массаж", price: "2 000 ₽", time: "60 мин" },
+  ],
+  complex: [
+    { name: "Живой Пар + Синусоида", price: "1 800 ₽", oldPrice: "2 200 ₽", label: "Популярно" },
+    { name: "Пар + Массаж", price: "2 900 ₽", oldPrice: "3 200 ₽" },
+    { name: "Антистресс (Всё включено)", price: "3 500 ₽", oldPrice: "4 000 ₽" },
+  ],
+  courses: [
+    { name: "Курс «Обновление» (5 визитов)", price: "8 000 ₽", oldPrice: "10 000 ₽" },
+    { name: "Курс «Ресурс» (10 визитов)", price: "15 000 ₽", oldPrice: "20 000 ₽" },
+  ]
+};
 
 const FAQ_ITEMS = [
   { q: 'Что такое Живой Пар?', a: 'Это мягкая процедура в специальной капсуле с ионизированным паром комнатной влажности. Температура около 40-42°C, что позволяет расслабиться без стресса, который бывает в обычной бане.' },
@@ -229,10 +271,12 @@ export default function App() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {TROUBLES.map((item, i) => (
-              <motion.button 
+              <motion.a 
                 key={i}
+                href={item.target === 'ai' ? undefined : item.target}
+                onClick={item.target === 'ai' ? () => window.dispatchEvent(new CustomEvent('open-ai')) : undefined}
                 whileHover={{ y: -5 }}
-                className="p-8 bg-white border border-brand-secondary rounded-[40px] text-left hover:shadow-xl hover:border-brand-accent transition-all group"
+                className="p-8 bg-white border border-brand-secondary rounded-[40px] text-left hover:shadow-xl hover:border-brand-accent transition-all group cursor-pointer"
               >
                 <div className="w-12 h-12 bg-brand-secondary flex items-center justify-center rounded-2xl mb-6 text-brand-accent group-hover:bg-brand-accent group-hover:text-white transition-colors">
                   {item.icon}
@@ -241,7 +285,7 @@ export default function App() {
                 <div className="flex items-center gap-2 text-brand-accent text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                   {item.r} <ChevronRight className="w-4 h-4" />
                 </div>
-              </motion.button>
+              </motion.a>
             ))}
           </div>
         </div>
@@ -344,6 +388,158 @@ export default function App() {
                  </div>
                </div>
              </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Step by Step Section */}
+      <section id="process" className="py-32 px-4 bg-white overflow-hidden relative border-t border-brand-secondary/50">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeading 
+            centered
+            title="Путь к расслаблению"
+            subtitle="Мы продумали каждую деталь вашего визита, чтобы вы могли просто закрыть глаза и довериться нам"
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+            {STEPS.map((step, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="flex gap-6 items-start"
+              >
+                <div className="w-16 h-16 bg-brand-secondary rounded-2xl flex items-center justify-center font-display text-2xl font-bold text-brand-accent shrink-0">
+                  {step.n}
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold mb-2 tracking-tight">{step.t}</h4>
+                  <p className="text-sm text-brand-dark/50 leading-relaxed font-light">{step.d}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Audiences Section */}
+      <section className="py-32 px-4 bg-brand-primary">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeading 
+            centered
+            title="Кому это необходимо?"
+            subtitle="Наши гости — это люди, которые ценят свое время и качество жизни"
+          />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {AUDIENCES.map((item, i) => (
+              <div key={i} className="p-10 bg-white rounded-[40px] border border-brand-secondary hover:border-brand-accent transition-all group">
+                <div className="w-12 h-12 bg-brand-secondary/50 rounded-xl flex items-center justify-center text-brand-accent mb-6 group-hover:bg-brand-accent group-hover:text-white transition-colors">
+                  <Target className="w-6 h-6" />
+                </div>
+                <h4 className="text-xl font-bold mb-4 tracking-tight">{item.t}</h4>
+                <p className="text-brand-dark/50 text-sm leading-relaxed font-light">{item.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Results Section */}
+      <section className="py-32 px-4 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeading 
+            centered
+            title="Ощущения после визита"
+            subtitle="Что чаще всего отмечают наши гости после процедур"
+          />
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {RESULTS.map((item, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="p-10 rounded-[40px] bg-brand-secondary/20 border border-brand-secondary/50"
+              >
+                <h4 className="text-xl font-bold mb-4 tracking-tighter">{item.t}</h4>
+                <p className="text-sm text-brand-dark/60 leading-relaxed font-light">{item.d}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="prices" className="py-32 px-4 bg-brand-primary">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeading 
+            centered
+            title="Стоимость и форматы"
+            subtitle="Выберите подходящий вариант для разового отдыха или долгосрочного восстановления"
+          />
+          
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Single Services */}
+            <div className="bg-white rounded-[60px] p-12 border border-brand-secondary">
+              <h3 className="text-2xl font-bold mb-10 tracking-tight">Разовые процедуры</h3>
+              <div className="space-y-6">
+                {PRICES.single.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between py-4 border-b border-brand-secondary last:border-0">
+                    <div>
+                      <div className="font-bold">{p.name}</div>
+                      <div className="text-xs text-brand-dark/40 uppercase tracking-widest mt-1">{p.time}</div>
+                    </div>
+                    <div className="font-display font-bold text-lg">{p.price}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Complexes */}
+            <div className="bg-brand-dark rounded-[60px] p-12 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <ShieldCheck className="w-40 h-40" />
+              </div>
+              <h3 className="text-2xl font-bold mb-10 tracking-tight relative z-10">Выгодные комплексы</h3>
+              <div className="space-y-6 relative z-10">
+                {PRICES.complex.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between py-4 border-b border-white/10 last:border-0">
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold">{p.name}</span>
+                        {p.label && <span className="text-[9px] bg-brand-accent text-white px-2 py-0.5 rounded-full uppercase font-bold">{p.label}</span>}
+                      </div>
+                      <div className="text-xs text-white/40 line-through mt-1">{p.oldPrice}</div>
+                    </div>
+                    <div className="font-display font-bold text-xl text-brand-accent">{p.price}</div>
+                  </div>
+                ))}
+              </div>
+              <button className="w-full mt-10 py-5 bg-brand-accent text-white rounded-full font-bold hover:bg-white hover:text-brand-dark transition-all">
+                Записаться на комплекс
+              </button>
+            </div>
+
+            {/* Courses */}
+            <div className="lg:col-span-2 bg-white rounded-[60px] p-12 border border-brand-secondary">
+              <h3 className="text-2xl font-bold mb-10 tracking-tight">Курсовые предложения</h3>
+              <div className="grid md:grid-cols-2 gap-12">
+                {PRICES.courses.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between p-8 bg-brand-primary/50 rounded-3xl border border-brand-secondary">
+                    <div>
+                      <div className="font-bold text-lg">{p.name}</div>
+                      <div className="text-xs text-brand-dark/40 line-through mt-1">{p.oldPrice}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-display font-bold text-2xl text-brand-dark">{p.price}</div>
+                      <div className="text-[10px] text-brand-accent font-bold uppercase mt-1">Лучшая цена</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -466,6 +662,19 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Sticky Mobile Panel */}
+      <div className="md:hidden fixed bottom-0 left-0 w-full p-4 bg-white/80 backdrop-blur-lg border-t border-brand-secondary z-40 flex gap-3">
+        <button className="flex-grow py-4 bg-brand-dark text-white rounded-2xl font-bold text-sm shadow-xl shadow-brand-dark/10">
+          Записаться
+        </button>
+        <button 
+          onClick={() => window.dispatchEvent(new CustomEvent('open-ai'))}
+          className="w-14 h-14 bg-brand-accent text-white rounded-2xl flex items-center justify-center shrink-0 shadow-xl shadow-brand-accent/20"
+        >
+          <MessageCircle className="w-6 h-6" />
+        </button>
+      </div>
     </div>
   );
 }
