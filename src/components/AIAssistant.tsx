@@ -54,15 +54,9 @@ export const AIAssistant = () => {
     setIsLoading(true);
 
     try {
-      // Ensure history parts are correctly structured
-      const formattedHistory = history.map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.parts[0].text }]
-      }));
-
       const response = await ai.models.generateContent({
-        model: "gemini-flash-latest",
-        contents: [...formattedHistory, userMsg],
+        model: "gemini-1.5-flash",
+        contents: [...history, userMsg],
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
           temperature: 0.7,
