@@ -92,12 +92,19 @@ const STEPS = [
 ];
 
 const AUDIENCES = [
-  { t: "Офисные сотрудники", d: "Для тех, кто много сидит, устает от компьютера и чувствует напряжение в спине." },
-  { t: "Предприниматели", d: "Для тех, кто принимает много решений и хочет восстановить спокойствие." },
-  { t: "Спортсмены", d: "Для мягкого восстановления мышц и ощущения легкости после нагрузок." },
-  { t: "Пожилые люди", d: "Для бережной заботы о теле, расслабления и поддержания подвижности." },
-  { t: "Любители массажа", d: "Для тех, кто хочет усилить эффект ручной работы мягким паром." },
-  { t: "Ищущие тишины", d: "Кому нужно 45–90 минут абсолютного спокойствия и перезагрузки." }
+  { t: "Офисные сотрудники", d: "Для тех, кто много сидит, устает от компьютера и чувствует напряжение в спине. Поможем сбросить груз рабочего дня." },
+  { t: "Предприниматели", d: "Для тех, кто принимает много решений и хочет восстановить спокойствие. 45 минут тишины для вашей перезагрузки." },
+  { t: "Спортсмены", d: "Для мягкого восстановления мышц и ощущения легкости после нагрузок. Пар и волны синусоиды ускорят восстановление." },
+  { t: "Пожилые люди", d: "Для бережной заботы о теле, расслабления и поддержания подвижности без лишнего стресса для сердца." },
+  { t: "Любители массажа", d: "Идеально в дополнение к классическому массажу. Мягкий пар подготовит мышцы к более глубокой проработке." },
+  { t: "Ищущие тишины", d: "Кому нужно время наедине с собой в уютной, спокойной обстановке. Мы создали пространство для замедления." }
+];
+
+const PREPARATION = [
+  "Возьмите с собой только хорошее настроение",
+  "Мы предоставим всё необходимое: полотенце, тапочки, халат",
+  "Рекомендуем не есть за 1.5–2 часа до процедур",
+  "Настройтесь на 45–90 минут полного цифрового детокса"
 ];
 
 const PRICES = {
@@ -544,6 +551,64 @@ export default function App() {
         </div>
       </section>
 
+      {/* Preparation Section */}
+      <section className="py-32 px-4 bg-brand-dark text-white overflow-hidden relative">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-20 items-center">
+          <div className="lg:w-1/2">
+            <SectionHeading 
+              light
+              title="Как подготовиться?"
+              subtitle="Мы позаботились обо всём, чтобы ваш визит был максимально комфортным"
+            />
+            <div className="space-y-6 mt-12">
+              {PREPARATION.map((item, i) => (
+                <div key={i} className="flex gap-6 items-center">
+                  <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-6 h-6 text-brand-accent" />
+                  </div>
+                  <p className="text-lg font-light text-white/80">{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="lg:w-1/2 relative">
+            <div className="aspect-square bg-brand-secondary/10 rounded-[60px] border border-white/10 flex items-center justify-center p-20 text-center">
+              <div>
+                <Wind className="w-20 h-20 text-brand-accent mx-auto mb-8 opacity-50" />
+                <h4 className="text-3xl font-bold mb-4 tracking-tight">Никаких забот</h4>
+                <p className="text-white/40 font-light">Вам не нужно брать с собой сумки с вещами. Просто приходите — всё остальное ждет вас в студии.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Location Section */}
+      <section id="contacts" className="py-32 px-4 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeading 
+            centered
+            title="Ждем вас в гости"
+            subtitle="Студия находится в тихом районе Альметьевска, где легко припарковаться и забыть о городской суете"
+          />
+          
+          <div className="grid lg:grid-cols-3 gap-8 mt-16">
+            <div className="p-10 bg-brand-primary rounded-[40px] border border-brand-secondary">
+              <h4 className="text-xl font-bold mb-4 tracking-tight">Адрес</h4>
+              <p className="text-brand-dark/60 font-light">г. Альметьевск, <br/>уточняйте при записи</p>
+            </div>
+            <div className="p-10 bg-brand-primary rounded-[40px] border border-brand-secondary">
+              <h4 className="text-xl font-bold mb-4 tracking-tight">Время работы</h4>
+              <p className="text-brand-dark/60 font-light">Ежедневно: 09:00 — 21:00 <br/>По предварительной записи</p>
+            </div>
+            <div className="p-10 bg-brand-primary rounded-[40px] border border-brand-secondary">
+              <h4 className="text-xl font-bold mb-4 tracking-tight">Контакты</h4>
+              <p className="text-brand-dark/60 font-light">+7 (XXX) XXX-XX-XX <br/>WhatsApp / Telegram</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ & Gifts */}
       <section id="faq" className="py-32 px-4 bg-brand-primary">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-24">
@@ -589,7 +654,7 @@ export default function App() {
       </section>
 
       {/* Footer */}
-      <footer id="contacts" className="pt-32 pb-16 px-4 bg-white border-t border-brand-secondary">
+      <footer className="pt-32 pb-16 px-4 bg-white border-t border-brand-secondary">
         <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-20 mb-24">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-10">
