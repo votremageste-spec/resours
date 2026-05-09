@@ -26,6 +26,9 @@ export const AIAssistant = () => {
   // Initialize AI instance with fallback
   const ai = React.useMemo(() => {
     const key = process.env.GEMINI_API_KEY || '';
+    if (!key) {
+      console.error('AI Assistant Error: GEMINI_API_KEY is not defined in environment variables.');
+    }
     return new GoogleGenAI({ apiKey: key });
   }, []);
 
