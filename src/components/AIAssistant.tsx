@@ -54,9 +54,16 @@ export const AIAssistant = () => {
     setIsLoading(true);
 
     try {
+      // Ensure history is alternating user/model and doesn't contain consecutive same roles
+      // Also strictly follow the Content format: { role: 'user'|'model', parts: [{ text: '...' }] }
+      const validHistory = history.filter((msg, index) => {
+        if (index === 0) return msg.role === 'user' || msg.role === 'model';
+        return msg.role !== history[index - 1].role;
+      });
+
       const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
-        contents: [...history, userMsg],
+        model: "gemini-3-flash-preview",
+        contents: [...validHistory, userMsg],
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
           temperature: 0.7,
@@ -66,10 +73,17 @@ export const AIAssistant = () => {
       if (response && response.text) {
         setHistory(prev => [...prev, { role: 'model', parts: [{ text: response.text }] }]);
       } else {
-        throw new Error('Empty response from AI');
+        throw new Error('Empty response or blocked content');
       }
-    } catch (error) {
-      console.error('Chat error:', error);
+    } catch (error: any) {
+      console.error('AI Chat Error Details:', error);
+      
+      // Check for specific error types if possible
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes('API_KEY')) {
+         console.error('CRITICAL: API Key issue detected.');
+      }
+
       setHistory(prev => [...prev, { role: 'model', parts: [{ text: 'Извините, произошла ошибка. Пожалуйста, попробуйте позже или напишите нам в WhatsApp.' }] }]);
     } finally {
       setIsLoading(false);
