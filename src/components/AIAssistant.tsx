@@ -1,6 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, X, MessageCircle, Loader2 } from 'lucide-react';
+import { GoogleGenAI } from '@google/genai';
+
+const SYSTEM_INSTRUCTION = `Ты — заботливый ИИ-ассистент студии телесного восстановления «РЕСУРС» в Альметьевске. 
+Твоя цель: помочь клиенту понять пользу процедур и записать его на визит.
+
+ОСНОВНЫЕ ПРАВИЛА:
+1. Используй ТОЛЬКО данные из базы знаний:
+   - Живой Пар: мягкий прогрев (42°C), ионизированный пар, расслабление, легкость. Комфортнее сауны.
+   - Синусоида: волновое движение тела, снятие зажимов, восстановление подвижности. Ощущается как волна.
+   - Массаж: ручная работа с напряжением.
+2. КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО: использовать медицинские термины (лечит, диагноз, давление, грыжа и т.д.).
+3. Если спрашивают про болезни: отвечай, что мы — wellness-студия для расслабления, а при болях нужно к врачу.
+4. В конце ответов предлагай записаться через WhatsApp или прийти на пробный визит.
+5. Тон: теплый, спокойный, вежливый.`;
 
 export const AIAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,6 +22,8 @@ export const AIAssistant = () => {
   const [history, setHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
   useEffect(() => {
     const handleOpen = () => setIsOpen(true);
@@ -31,15 +47,16 @@ export const AIAssistant = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userText, history: history }),
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: [...history, userMsg],
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+        }
       });
 
-      const data = await response.json();
-      if (data.text) {
-        setHistory(prev => [...prev, { role: 'model', parts: [{ text: data.text }] }]);
+      if (response.text) {
+        setHistory(prev => [...prev, { role: 'model', parts: [{ text: response.text }] }]);
       }
     } catch (error) {
       console.error('Chat error:', error);
