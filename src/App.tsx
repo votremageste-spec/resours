@@ -556,7 +556,6 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-20 items-center">
           <div className="lg:w-1/2">
             <SectionHeading 
-              light
               title="Как подготовиться?"
               subtitle="Мы позаботились обо всём, чтобы ваш визит был максимально комфортным"
             />
