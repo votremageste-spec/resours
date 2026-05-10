@@ -1,20 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, X, MessageCircle, Loader2 } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const SYSTEM_INSTRUCTION = `Ты — заботливый ИИ-ассистент студии телесного восстановления «РЕСУРС» в Альметьевске. 
-Твоя цель: помочь клиенту понять пользу процедур и записать его на визит.
-
-ОСНОВНЫЕ ПРАВИЛА:
-1. Используй ТОЛЬКО данные из базы знаний:
-   - Живой Пар: мягкий прогрев (42°C), ионизированный пар, расслабление, легкость. Комфортнее сауны.
-   - Синусоида: волновое движение тела, снятие зажимов, восстановление подвижности. Ощущается как волна.
-   - Массаж: ручная работа с напряжением.
-2. КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО: использовать медицинские термины (лечит, диагноз, давление, грыжа и т.д.).
-3. Если спрашивают про болезни: отвечай, что мы — wellness-студия для расслабления, а при болях нужно к врачу.
-4. В конце ответов предлагай записаться через WhatsApp или прийти на пробный визит.
-5. Тон: теплый, спокойный, вежливый.`;
+Ты должен помогать клиентам, отвечать на вопросы о процедурах (Живой Пар, Синусоида, Массаж) и приглашать их на запись через WhatsApp.
+Используй дружелюбный, спокойный тон. Не используй медицинские термины.`;
 
 export const AIAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,15 +13,6 @@ export const AIAssistant = () => {
   const [history, setHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Initialize AI instance with fallback
-  const ai = React.useMemo(() => {
-    const key = process.env.GEMINI_API_KEY || '';
-    if (!key) {
-      console.error('AI Assistant Error: GEMINI_API_KEY is not defined in environment variables.');
-    }
-    return new GoogleGenAI({ apiKey: key });
-  }, []);
 
   useEffect(() => {
     const handleOpen = () => setIsOpen(true);
@@ -51,7 +33,7 @@ export const AIAssistant = () => {
     if (!key || key === '') {
       setHistory(prev => [...prev, 
         { role: 'user', parts: [{ text: input }] },
-        { role: 'model', parts: [{ text: 'Ошибка: API ключ не найден в приложении. Пожалуйста, добавьте GEMINI_API_KEY в настройки Vercel (Project Settings -> Environment Variables) и запустите Повторное развертывание (Redeploy).' }] }
+        { role: 'model', parts: [{ text: 'Ошибка: API ключ (GEMINI_API_KEY) не настроен в Vercel.' }] }
       ]);
       setInput('');
       return;
@@ -64,54 +46,52 @@ export const AIAssistant = () => {
     setIsLoading(true);
 
     try {
-      // Hardened History Logic for Gemini
-      const refinedHistory: any[] = [];
-      let nextRole = 'user';
+      const genAI = new GoogleGenerativeAI(key);
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-1.5-flash",
+        systemInstruction: SYSTEM_INSTRUCTION
+      });
 
-      // Keep only alternating messages starting from user
+      // Maintain alternating history
+      const contents = [];
+      let nextRole = 'user';
       for (const msg of history) {
         if (msg.role === nextRole) {
-          refinedHistory.push(msg);
+          contents.push(msg);
           nextRole = nextRole === 'user' ? 'model' : 'user';
         }
       }
+      
+      // Add current message
+      contents.push(userMsg);
 
-      // If we accidentally ended with a user message in history, 
-      // we remove it because userMsg is the current payload
-      if (refinedHistory.length > 0 && refinedHistory[refinedHistory.length - 1].role === 'user') {
-        refinedHistory.pop();
-      }
-
-      const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
-        contents: [...refinedHistory, userMsg],
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
+      const result = await model.generateContent({
+        contents,
+        generationConfig: {
           temperature: 0.7,
-        }
+          maxOutputTokens: 500,
+        },
       });
 
-      const text = response.text;
+      const response = await result.response;
+      const text = response.text();
 
       if (text) {
         setHistory(prev => [...prev, { role: 'model', parts: [{ text }] }]);
       } else {
-        throw new Error('Модель вернула пустой ответ.');
+        throw new Error('Пустой ответ от модели');
       }
     } catch (error: any) {
-      console.error('AI Chat Error Details:', error);
+      console.error('AI Chat Error:', error);
+      let msg = 'Произошла ошибка при связи с ИИ. Пожалуйста, попробуйте позже.';
       
-      let friendlyError = 'Извините, произошла ошибка. Пожалуйста, проверьте API ключ в настройках Vercel или попробуйте позже.';
-      
-      if (error?.message?.includes('API_KEY')) {
-        friendlyError = 'Ошибка: API ключ недействителен или отсутствует. Пожалуйста, добавьте GEMINI_API_KEY в переменные окружения Vercel.';
-      } else if (error?.message?.includes('403')) {
-        friendlyError = 'Ошибка 403: Доступ запрещен. Возможно, стоит проверить регион или лимиты API.';
-      } else if (error?.message) {
-        friendlyError = `Ошибка: ${error.message}`;
+      if (error.message?.includes('403')) {
+        msg = 'Ошибка 403: Доступ к API ограничен. Проверьте регион или лимиты ключа в Google AI Studio.';
+      } else if (error.message?.includes('404')) {
+        msg = 'Ошибка 404: Модель не найдена. Попробуйте обновить проект или изменить модель в коде.';
       }
-
-      setHistory(prev => [...prev, { role: 'model', parts: [{ text: friendlyError }] }]);
+      
+      setHistory(prev => [...prev, { role: 'model', parts: [{ text: msg }] }]);
     } finally {
       setIsLoading(false);
     }
