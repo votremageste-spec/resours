@@ -55,12 +55,10 @@ export const AIAssistant = () => {
 
     try {
       // Hardened History Logic for Gemini
-      // 1. Must alternate User -> Model
-      // 2. Must start with User
-      // 3. Must end with User (userMsg)
       const refinedHistory: any[] = [];
       let nextRole = 'user';
 
+      // Keep only alternating messages starting from user
       for (const msg of history) {
         if (msg.role === nextRole) {
           refinedHistory.push(msg);
@@ -68,7 +66,8 @@ export const AIAssistant = () => {
         }
       }
 
-      // If refinedHistory ends with 'user', we drop it because userMsg is about to be added
+      // If we accidentally ended with a user message in history, 
+      // we remove it because userMsg is the current payload
       if (refinedHistory.length > 0 && refinedHistory[refinedHistory.length - 1].role === 'user') {
         refinedHistory.pop();
       }
@@ -87,17 +86,22 @@ export const AIAssistant = () => {
       if (text) {
         setHistory(prev => [...prev, { role: 'model', parts: [{ text }] }]);
       } else {
-        throw new Error('Empty response or blocked content');
+        throw new Error('Модель вернула пустой ответ.');
       }
     } catch (error: any) {
       console.error('AI Chat Error Details:', error);
       
-      const errorMessage = error?.message || '';
-      if (errorMessage.includes('API_KEY')) {
-         console.error('CRITICAL: API Key issue detected.');
+      let friendlyError = 'Извините, произошла ошибка. Пожалуйста, проверьте API ключ в настройках Vercel или попробуйте позже.';
+      
+      if (error?.message?.includes('API_KEY')) {
+        friendlyError = 'Ошибка: API ключ недействителен или отсутствует. Пожалуйста, добавьте GEMINI_API_KEY в переменные окружения Vercel.';
+      } else if (error?.message?.includes('403')) {
+        friendlyError = 'Ошибка 403: Доступ запрещен. Возможно, стоит проверить регион или лимиты API.';
+      } else if (error?.message) {
+        friendlyError = `Ошибка: ${error.message}`;
       }
 
-      setHistory(prev => [...prev, { role: 'model', parts: [{ text: 'Извините, произошла ошибка. Пожалуйста, попробуйте позже или напишите нам в WhatsApp.' }] }]);
+      setHistory(prev => [...prev, { role: 'model', parts: [{ text: friendlyError }] }]);
     } finally {
       setIsLoading(false);
     }
