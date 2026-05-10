@@ -45,7 +45,17 @@ export const AIAssistant = () => {
   }, [history]);
 
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if (isLoading || !input.trim()) return;
+
+    const key = process.env.GEMINI_API_KEY;
+    if (!key || key === '') {
+      setHistory(prev => [...prev, 
+        { role: 'user', parts: [{ text: input }] },
+        { role: 'model', parts: [{ text: 'Ошибка: API ключ не найден в приложении. Пожалуйста, добавьте GEMINI_API_KEY в настройки Vercel (Project Settings -> Environment Variables) и запустите Повторное развертывание (Redeploy).' }] }
+      ]);
+      setInput('');
+      return;
+    }
 
     const userText = input;
     const userMsg = { role: 'user', parts: [{ text: userText }] };
@@ -73,7 +83,7 @@ export const AIAssistant = () => {
       }
 
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-1.5-flash",
         contents: [...refinedHistory, userMsg],
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
