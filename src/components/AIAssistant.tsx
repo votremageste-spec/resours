@@ -54,21 +54,23 @@ export const AIAssistant = () => {
     setIsLoading(true);
 
     try {
-      // Ensure history is alternating user/model and follows the required format
-      const alternatingHistory: any[] = [];
-      let expectedRole = 'user';
-      
+      // Hardened History Logic for Gemini
+      // 1. Must alternate User -> Model
+      // 2. Must start with User
+      // 3. Must end with User (userMsg)
+      const refinedHistory: any[] = [];
+      let nextRole = 'user';
+
       for (const msg of history) {
-        if (msg.role === expectedRole) {
-          alternatingHistory.push(msg);
-          expectedRole = expectedRole === 'user' ? 'model' : 'user';
+        if (msg.role === nextRole) {
+          refinedHistory.push(msg);
+          nextRole = nextRole === 'user' ? 'model' : 'user';
         }
       }
 
-      // If alternatingHistory ends with 'user', we need to remove it 
-      // because we're about to append the new 'userMsg'.
-      if (alternatingHistory.length > 0 && alternatingHistory[alternatingHistory.length - 1].role === 'user') {
-        alternatingHistory.pop();
+      // If refinedHistory ends with 'user', we drop it because userMsg is about to be added
+      if (refinedHistory.length > 0 && refinedHistory[refinedHistory.length - 1].role === 'user') {
+        refinedHistory.pop();
       }
 
       const model = ai.getGenerativeModel({ 
@@ -77,7 +79,7 @@ export const AIAssistant = () => {
       });
 
       const result = await model.generateContent({
-        contents: [...alternatingHistory, userMsg],
+        contents: [...refinedHistory, userMsg],
         generationConfig: {
           temperature: 0.7,
         }
