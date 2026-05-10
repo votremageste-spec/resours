@@ -57,12 +57,12 @@ export const AIAssistant = () => {
       // Ensure history is alternating user/model and doesn't contain consecutive same roles
       // Also strictly follow the Content format: { role: 'user'|'model', parts: [{ text: '...' }] }
       const validHistory = history.filter((msg, index) => {
-        if (index === 0) return msg.role === 'user' || msg.role === 'model';
+        if (index === 0) return msg.role === 'user';
         return msg.role !== history[index - 1].role;
       });
 
       const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
+        model: "gemini-3-flash-preview",
         contents: [...validHistory, userMsg],
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
