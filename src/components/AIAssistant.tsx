@@ -54,31 +54,46 @@ export const AIAssistant = () => {
     setIsLoading(true);
 
     try {
-      // Ensure history is alternating user/model and doesn't contain consecutive same roles
-      // Also strictly follow the Content format: { role: 'user'|'model', parts: [{ text: '...' }] }
-      const validHistory = history.filter((msg, index) => {
-        if (index === 0) return msg.role === 'user';
-        return msg.role !== history[index - 1].role;
+      // Ensure history is alternating user/model and follows the required format
+      const alternatingHistory: any[] = [];
+      let expectedRole = 'user';
+      
+      for (const msg of history) {
+        if (msg.role === expectedRole) {
+          alternatingHistory.push(msg);
+          expectedRole = expectedRole === 'user' ? 'model' : 'user';
+        }
+      }
+
+      // If alternatingHistory ends with 'user', we need to remove it 
+      // because we're about to append the new 'userMsg'.
+      if (alternatingHistory.length > 0 && alternatingHistory[alternatingHistory.length - 1].role === 'user') {
+        alternatingHistory.pop();
+      }
+
+      const model = ai.getGenerativeModel({ 
+        model: "gemini-1.5-flash",
+        systemInstruction: SYSTEM_INSTRUCTION
       });
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [...validHistory, userMsg],
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
+      const result = await model.generateContent({
+        contents: [...alternatingHistory, userMsg],
+        generationConfig: {
           temperature: 0.7,
         }
       });
 
-      if (response && response.text) {
-        setHistory(prev => [...prev, { role: 'model', parts: [{ text: response.text }] }]);
+      const response = await result.response;
+      const text = response.text();
+
+      if (text) {
+        setHistory(prev => [...prev, { role: 'model', parts: [{ text }] }]);
       } else {
         throw new Error('Empty response or blocked content');
       }
     } catch (error: any) {
       console.error('AI Chat Error Details:', error);
       
-      // Check for specific error types if possible
       const errorMessage = error?.message || '';
       if (errorMessage.includes('API_KEY')) {
          console.error('CRITICAL: API Key issue detected.');
