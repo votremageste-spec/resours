@@ -73,20 +73,16 @@ export const AIAssistant = () => {
         refinedHistory.pop();
       }
 
-      const model = ai.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
-        systemInstruction: SYSTEM_INSTRUCTION
-      });
-
-      const result = await model.generateContent({
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
         contents: [...refinedHistory, userMsg],
-        generationConfig: {
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
           temperature: 0.7,
         }
       });
 
-      const response = await result.response;
-      const text = response.text();
+      const text = response.text;
 
       if (text) {
         setHistory(prev => [...prev, { role: 'model', parts: [{ text }] }]);
